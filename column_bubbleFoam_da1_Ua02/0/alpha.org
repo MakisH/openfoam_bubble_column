@@ -1,0 +1,56 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  1.6                                   |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    location    "0";
+    object      alpha;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 0 0 0 0 0 0];
+
+internalField   uniform 0;
+
+boundaryField
+{
+  atmosphere
+  {
+    type        zeroGradient;
+  }
+
+	bubble
+	{
+		// Use groovyBC to set the boundary condition of alpha
+	  type groovyBC;
+	  valueExpression "(mag(Ua) > 0.0) ? 0.95 : 0";
+    // type  fixedValue;
+    // value uniform 0.95;
+	}
+
+  bottom
+  {
+    type zeroGradient;
+  }
+
+  wall
+  {
+    type zeroGradient;
+  }
+
+  defaultFaces
+  {
+      type            empty;
+  }
+
+}
+
+
+// ************************************************************************* //

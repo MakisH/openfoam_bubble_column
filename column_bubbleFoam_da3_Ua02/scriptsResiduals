@@ -1,0 +1,99 @@
+#!/bin/sh
+#
+# Run the foamLog directory periodically
+# and then launch gnuplot to visualize the results
+#
+# This script accepts two optional parameters :
+#	$1 = name of the log file (default = "log.*Foam")
+#	$2 = save in a file the residuals - value : "on" or "off" (default = "off")
+#
+# author Frederic Collonval
+# version 2010.06.18
+# email collonval@td.mw.tum.de
+
+SAVE="off"
+LOG="log.*Foam"
+
+if [ $# -ge 1 ]; then
+		LOG=$1
+fi
+echo "The log file is $LOG"
+if [ $# -ge 2 ]; then
+		if [ $2 = "on" ]; then
+			SAVE=$2
+			echo "The residuals will be save in \"Residuals.png\""
+		fi
+fi
+
+
+
+# Look if foamLog was not previously executed
+if [ ! -e ./logs/foamLog.awk ]; then
+		echo "Execute foamLog"
+		foamLog -s $LOG
+
+# Move each residual you want to plot to a file name ./logs/res_*
+		for f in $( ls ./logs/alpha_0 ./logs/alphaFinalRes_0 ./logs/p_0 ./logs/pFinalRes_0); do
+				name=`echo $f | cut -d'/' -f3`
+				mv $f ./logs/res_$name
+		done
+
+#		mv ./logs/p_0 ./logs/res_p
+#		mv ./logs/Uz_0 ./logs/res_Uz
+fi
+
+# create a gnuplot script to plot the residuals
+if [ ! -e plot.gnu ]; then
+		echo "Generate the gnuplot script"
+
+		if [ $SAVE = "on" ]; then
+				echo "set terminal png; set output \"Residuals.png\"" > plot.gnu
+		else
+				echo " " > plot.gnu
+		fi
+
+		echo -n "set logscale y; set ylabel \"Residuals\"; set xlabel \"Time\"; plot " >> plot.gnu
+		K=0
+		for f in $( ls ./logs/res_* ); do
+				if [ $K -eq 0 ]; then
+						echo -n "\"$f\" w l" >> plot.gnu
+						K=1
+				else
+						echo -n ", \"$f\" w l" >> plot.gnu
+				fi
+		done
+		# Introduce a break before closing the window
+		echo -n "; pause 3;" >> plot.gnu
+		if [ ! $SAVE = "on" ]; then
+				 # Loop inside the gnuplot script except if output is a file
+				echo -n "reread;" >> plot.gnu
+		fi
+fi
+
+# Run in an external parallel process the script to extract the parameters
+(
+		# J=0
+		# while [ $J -lt 1 ]; do
+				echo "Execute the awk script on $LOG"
+				awk -f ./logs/foamLog.awk $LOG
+
+# Move each residual you want to plot to a file name ./logs/res_*
+				for f in $( ls ./logs/alpha_0 ./logs/alphaFinalRes_0 ./logs/p_0 ./logs/pFinalRes_0 ); do
+						name=`echo $f | cut -d'/' -f3`
+						mv $f ./logs/res_$name
+				done
+
+#				mv ./logs/p_0 ./logs/res_p
+#				mv ./logs/Uz_0 ./logs/res_Uz
+
+				# J=`tail $LOG | grep -c -e End -e Exit -e exiting`
+		# done
+) &
+
+echo "Subprocess launched"
+
+# Plot the residuals (need to type Ctrl+C to stop gnuplot because of the command reread)
+gnuplot plot.gnu
+
+# remove the gnuplot script
+rm plot.gnu

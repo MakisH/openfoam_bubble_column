@@ -1,0 +1,53 @@
+#!/bin/sh
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+# Get application name
+application=`getApplication`
+
+echo "[!] Make sure you are using OpenFOAM 2.0.1 (run OF201) [!]"
+
+# Create the base mesh
+echo "Creating the base mesh..."
+runApplication blockMesh
+
+# Refine the mesh around the inlet
+echo "Refining the mesh..."
+setSet -batch refine.setSet > log.setSet_2
+refineMesh -dict -overwrite > log.refineMesh_1
+
+# Refine the mesh around the obstacle area
+setSet -batch refineSphere.setSet >> log.setSet_2
+refineMesh -dict -overwrite >> log.refineMesh_1
+
+# Create the patch for the inlet (face "bubble")
+echo "Creating the patch for the inlet..."
+setSet -batch makeFaceSet.setSet > log.setSet_1
+createPatch -overwrite > log.createPatch
+
+# Set an obstacle
+echo "Setting an obstacle..."
+setSet -batch obstacle.setSet > log.setSet_obstacle
+subsetMesh wallObstacle -patch wall -overwrite > log.subsetMesh
+
+# Initilize a part of the column with alpha=0
+echo "Initializing alpha..."
+runApplication setFields
+
+# Decompose the case for parallel execution (see the decomposeParDict)
+echo "Decomposing the case... [check the number of subdomains]"
+decomposePar > log.decomposePar
+# Run the solver in parallel (-np defines the number of processors)
+NPROCS='2'
+# echo "Submitting the jobscript to solve the case in parallel with ${NPROCS} processors..."
+# qsub jobScript && echo "Jobscript submitted. Run 'qstat -u username' to see the job status or 'qdel job-ID' to cancel the job."
+echo "Running in parallel with ${NPROCS} processors..."
+mpiexec -np ${NPROCS} bubbleFoam -parallel > log.bubbleFoam
+
+# Reconstruct the case for post-processing
+#echo "Reconstructing the case..."
+#reconstructPar > log.reconstructPar
+
+# # Fallback: run sequentially
+# echo "Running bubbleFoam sequentially..."
+# bubbleFoam > log.bubbleFoam

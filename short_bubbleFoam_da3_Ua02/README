@@ -1,0 +1,25 @@
+Bubble column: short version
+Column height: 0.05m, 20 cells.
+da = 3mm, Ua = 0.2m/s.
+No obstacle.
+Solver: bubbleFoam
+
+In order to run this demo:
+
+1. Make sure you are using OpenFOAM v.2.0.1 (e.g. run OF201).
+   The groovyBC is also required.
+2. Run "./Allclean", if needed.
+3. Run "./Allrun" or "./Allparrun".
+The parallel execution is configured for two subdomains.
+
+If you are using an old version of Paraview, uncomment the "reconstructPar"
+command in the Allrun/Allparrun scripts. Otherwise, you can load the decomposed
+case in Paraview.
+
+This is a smaller demo case and it requires a few minutes of computations.
+Feel free to interrupt the computations early.
+
+In case you want to run a shorter column, you must change the files:
+1. blockMeshDict
+2. setFields
+3. refine.setSet

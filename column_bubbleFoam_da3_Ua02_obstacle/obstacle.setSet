@@ -1,0 +1,4 @@
+cellSet wallObstacle new
+cellSet wallObstacle invert
+
+cellSet wallObstacle delete sphereToCell (0.0 0.0 0.05) 0.005

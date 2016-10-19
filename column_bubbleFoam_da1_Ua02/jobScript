@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+#This is an example script to execute a parallel job with OpenFOAM
+# ! Be sure to have decompose using decomposePar before submitting this script
+#
+#These commands set up the Grid Environment for your job:
+# Output folder for the journal file
+#PBS -o /nfs/home/ofoam2/OpenFOAM/ofoam2-2.1.1/run/project/column_bubbleFoam_da1_Ua02/
+#PBS -j oe
+# Name of the job
+#PBS -N d9Ua02
+#PBS -q batch
+#PBS -l nodes=1:ppn=4:buddies 
+# E-mail address at which notification will be sent
+#PBS -M makishourdakis@gmail.com
+#PBS -m abe
+
+# Load OpenFOAM-2.0.1
+source /nfs/etc/bashrc
+OF201
+# Change the current directory to the case directory
+cd /nfs/home/ofoam2/OpenFOAM/ofoam2-2.1.1/run/project/column_bubbleFoam_da1_Ua02/
+# Execute bubbleFoam on the current case directory
+mpiexec bubbleFoam -parallel > log.bubbleFoam
